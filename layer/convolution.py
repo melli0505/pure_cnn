@@ -1,3 +1,6 @@
+import numpy as np
+
+
 class Convolution:
     # 1. conv + padding
 
@@ -23,8 +26,9 @@ class Convolution:
 
         conv_layer = []
 
+        # 이 과정이 죽도록 복잡하고 비효율적이라 numpy 쓰는 쪽이 좋다고 하긴 한다
         for filter in filters:  # filter = w x h x 3 / image = n x n x 3
-            output_layer = []
+            output_layer = []  # layer per filter
             s_x, s_y = 0, 0
             while not (s_x + width >= len_w and s_y + height >= len_h):
                 for channel in range(channel_num):
