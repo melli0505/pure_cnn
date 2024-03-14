@@ -2,46 +2,89 @@ import numpy as np
 
 
 class FullyConnected:
-    def __init__(self) -> None:
-        self.weights = []
-        pass
+    def __init__(self, input_layer, hidden_layer: list, output_layer) -> None:
+        self.hidden_layer = hidden_layer
+        self.input_layer = input_layer
+        self.output_layer = output_layer
 
-    def feedforward(self, input_layer, hidden_units, bias):
+        self.L = len(hidden_layer)
+
+        self.parameters = {}
+
+        self.parameters["w" + str(1)] = (
+            np.random.randn(hidden_layer[0]["units"], input_layer.shape[0]) * 0.01
+        )
+        self.parameters["b" + str(1)] = np.ones((hidden_layer[0]["units"], 1))
+        self.parameters["out" + str(1)] = np.ones((hidden_layer[0]["units"], 1))
+        self.parameters["net" + str(1)] = np.ones((hidden_layer[0]["units"], 1))
+
+        for i in range(1, len(hidden_layer)):
+            self.parameters["w" + str(i + 1)] = (
+                np.random.randn(hidden_layer[i - 1]["units"], hidden_layer[i]["units"])
+                * 0.01
+            )
+            self.parameters["b" + str(i + 1)] = np.ones((hidden_layer[i]["units"], 1))
+            self.parameters["out" + str(i + 1)] = np.ones((hidden_layer[i]["units"], 1))
+            self.parameters["net" + str(i + 1)] = np.ones((hidden_layer[i]["units"], 1))
+
+        self.parameters["c"] = 1
+        self.derivatives = {}
+
+    def sigmoid(self, x):
+        return 1 / (1 + np.exp(-1 * x))
+
+    def feedforward(self, input_layer):
         """
         w = weight matrix [   ]
         x = value matrix [   ]
         b = bias
-
-        logistic function = 1 / (1 + e**(-x))
         """
-        hidden_output = []
+        self.parameters["out0"] = input_layer
 
-        for u in range(len(hidden_units)):
-            unit_output = 0
-            for i in range(len(input_layer)):
-                unit_output += input_layer[i] * hidden_units[u][i]
-            unit_output += bias[u]
+        for l in range(1, self.L + 1):
+            self.parameters["net" + str(l)] = np.add(
+                np.dot(
+                    self.parameters["w" + str(l)], self.parameters["out" + str(l - 1)]
+                ),
+                self.parameters["b" + str(l)],
+            )
+            self.parameters["out" + str(l)] = self.sigmoid(
+                self.parameters["net" + str(l)]
+            )
 
-            hidden_output.append(unit_output)
+    def calc_derivatives(self, y):
+        # 1. output layer 쪽 미분계수 구하기
+        # -(target_o - out_o) * out_o(1 - out_o) * out_h
+        self.parameters["d_out" + str(self.L)] = -(
+            y - self.parameters["out" + str(self.L)]
+        )
+        self.parameters["dw" + str(self.L)] = self.parameters["d_out"] * None
+        self.parameters["dz" + str(self.L)] = self.parameters["d_out" + str(self.L)]
 
-        output = 1 / (1 + np.exp(np.array(hidden_output) * -1))
-        return output
+        # 2. hidden layer 쪽 미분계수 구하기
 
     def backpropagation(self):
         pass
 
-    def calcCost(self, func: str, y_hat, y):
-        if func == "mse":
-            return np.sum((y - y_hat) ** 2 / len(y))
-        elif func == "binaryCrossEntropy":
-            pass
-        elif func == "crossEntropy":
-            pass
+    def calc_cost(self, y):
+        # mean square error
+        self.parameters["c"] = (1 / len(y)) * np.sum(
+            np.subtract(y, self.parameters["out" + str(self.L)]) ** 2
+        )
 
     def optimization(self):
         pass
 
 
+hidden_layer = [{"name": "1", "units": 2}, {"name": "1", "units": 2}]
+input_layer = np.array([0.05, 0.1])
+output_layer = []
+fc = FullyConnected(input_layer, hidden_layer, output_layer)
+print(fc.parameters)
+
+fc.feedforward(input_layer)
+print(fc.parameters)
+"""
 # 1. feed forward
 fc = FullyConnected()
 x = np.array([0.05, 0.1])
@@ -93,3 +136,5 @@ print(cost)
 
 
 # 3. back propagation
+
+"""
