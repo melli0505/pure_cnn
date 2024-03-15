@@ -76,14 +76,23 @@ class FullyConnected:
         pass
 
 
-hidden_layer = [{"name": "1", "units": 2}, {"name": "1", "units": 2}]
-input_layer = np.array([0.05, 0.1])
-output_layer = []
-fc = FullyConnected(input_layer, hidden_layer, output_layer)
-print(fc.parameters)
+# hidden_layer = [{"name": "1", "units": 2}, {"name": "1", "units": 2}]
+# input_layer = np.array([0.05, 0.1])
+# output_layer = []
+# fc = FullyConnected(input_layer, hidden_layer, output_layer)
+# print(fc.parameters)
 
-fc.feedforward(input_layer)
-print(fc.parameters)
+# fc.feedforward(input_layer)
+# print(fc.parameters)
+
+# w1 = fc.parameters['w1']
+# b1 = fc.parameters['b1']
+# net1 = fc.parameters['net1']
+# out1 = fc.parameters['out1']
+
+# w2 = fc.parameters['w2']
+# b2 = fc.parameters['b2']
+
 """
 # 1. feed forward
 fc = FullyConnected()
