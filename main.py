@@ -1,5 +1,6 @@
 import numpy as np
 from layer.convolution import Convolution
+from layer.neural_network import FullyConnected
 
 
 # 1. get training data
@@ -17,12 +18,20 @@ mnist_np = np.array(csv_data, dtype=np.int32)
 train_y = mnist_np[:, 0]
 train_x = mnist_np[:, 1:].reshape(60000, 1, 28, 28)
 
+hiddens = [
+    {"name": "dense1", "units": 128},
+    {"name": "dense2", "units": 64},
+    {"name": "dense3", "units": 32},
+    {"name": "dense4", "units": 16},
+]
 
-for image in train_x[:1]:
+epochs = 10
+
+for i in range(1):
 
     # 2. convolution
-    conv2d1 = Convolution(image, filter_num=8, kernel_size=(3, 3))
-    conv1_output = conv2d1.convolution(image, strides=1, padding=False)
+    conv2d1 = Convolution(train_x[i], filter_num=8, kernel_size=(3, 3))
+    conv1_output = conv2d1.convolution(train_x[i], strides=1, padding=False)
     print("conv1: ", conv1_output.shape)
     conv2d2 = Convolution(conv1_output, filter_num=4, kernel_size=(3, 3))
     conv2_output = conv2d2.convolution(conv1_output, strides=1, padding=False)
@@ -37,11 +46,11 @@ for image in train_x[:1]:
     print("flatten: ", flatten.shape)
 
     # 4. nn
-
-
-hiddens = [
-    {"name": "dense1", "units": 128},
-    {"name": "dense2", "units": 64},
-    {"name": "dense3", "units": 32},
-    {"name": "dense4", "units": 16},
-]
+    NN = FullyConnected(input_layer=flatten, hidden_layer=hiddens)
+    ff_out = flatten
+    for j in range(epochs):
+        ff_out = NN.feedforward(ff_out)
+        cost = NN.calc_cost(train_y[i])
+        NN.calc_derivatives(train_y[i])
+        NN.backpropagation(0.1)
+        print("epoch" + str(j) + ": ", cost)

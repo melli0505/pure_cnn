@@ -1,2 +1,2 @@
 from .convolution import Convolution
-from .feed_forward import FullyConnected
+from .neural_network import FullyConnected

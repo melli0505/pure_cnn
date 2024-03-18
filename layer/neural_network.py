@@ -2,7 +2,7 @@ import numpy as np
 
 
 class FullyConnected:
-    def __init__(self, input_layer, hidden_layer: list, output_layer) -> None:
+    def __init__(self, input_layer, hidden_layer: list, output_layer=0) -> None:
         self.hidden_layer = hidden_layer
         self.input_layer = input_layer
         self.output_layer = output_layer
@@ -12,9 +12,9 @@ class FullyConnected:
         self.parameters = {}
 
         self.parameters["w" + str(1)] = (
-            np.random.randn(hidden_layer[0]["units"], input_layer.shape[0]) * 0.01
+            np.random.randn(input_layer.shape[0], hidden_layer[0]["units"]) * 0.01
         )
-        self.parameters["b" + str(1)] = np.ones((hidden_layer[0]["units"], 1))
+        self.parameters["b" + str(1)] = np.ones((hidden_layer[0]["units"],))
         self.parameters["out" + str(1)] = np.ones((hidden_layer[0]["units"], 1))
         self.parameters["net" + str(1)] = np.ones((hidden_layer[0]["units"], 1))
 
@@ -23,7 +23,7 @@ class FullyConnected:
                 np.random.randn(hidden_layer[i - 1]["units"], hidden_layer[i]["units"])
                 * 0.01
             )
-            self.parameters["b" + str(i + 1)] = np.ones((hidden_layer[i]["units"], 1))
+            self.parameters["b" + str(i + 1)] = np.ones((hidden_layer[i]["units"],))
             self.parameters["out" + str(i + 1)] = np.ones((hidden_layer[i]["units"], 1))
             self.parameters["net" + str(i + 1)] = np.ones((hidden_layer[i]["units"], 1))
 
@@ -32,6 +32,9 @@ class FullyConnected:
 
     def sigmoid(self, x):
         return 1 / (1 + np.exp(-1 * x))
+
+    def sigmoid_prime(self, x):
+        return self.sigmoid(x) * (1.0 - self.sigmoid(x))
 
     def feedforward(self, input_layer):
         """
@@ -44,36 +47,88 @@ class FullyConnected:
         for l in range(1, self.L + 1):
             self.parameters["net" + str(l)] = np.add(
                 np.dot(
-                    self.parameters["w" + str(l)], self.parameters["out" + str(l - 1)]
+                    self.parameters["out" + str(l - 1)],
+                    self.parameters["w" + str(l)],
                 ),
                 self.parameters["b" + str(l)],
             )
+
+            self.parameters["net" + str(l)] = (
+                np.dot(
+                    self.parameters["out" + str(l - 1)], self.parameters["w" + str(l)]
+                )
+                + self.parameters["b" + str(l)]
+            )
+
             self.parameters["out" + str(l)] = self.sigmoid(
                 self.parameters["net" + str(l)]
             )
+        return self.parameters["out" + str(self.L)]
 
     def calc_derivatives(self, y):
         # 1. output layer 쪽 미분계수 구하기
-        # -(target_o - out_o) * out_o(1 - out_o) * out_h
-        self.parameters["d_out" + str(self.L)] = -(
-            y - self.parameters["out" + str(self.L)]
+        # dzL
+        self.derivatives["dz" + str(self.L)] = self.parameters["out" + str(self.L)] - y
+        # dWL
+        self.derivatives["dW" + str(self.L)] = (
+            self.derivatives["dz" + str(self.L)]
+            * self.parameters["out" + str(self.L)]
+            * (1 - self.parameters["out" + str(self.L)])
+            * np.transpose([self.parameters["out" + str(self.L - 1)]])
         )
-        self.parameters["dw" + str(self.L)] = self.parameters["d_out"] * None
-        self.parameters["dz" + str(self.L)] = self.parameters["d_out" + str(self.L)]
-
+        # dbL
+        self.derivatives["db" + str(self.L)] = self.derivatives["dz" + str(self.L)]
+        print(
+            "derivatives shape: \n\t dz: ",
+            self.derivatives["dz" + str(self.L)].shape,
+            "\n\t dw: ",
+            self.derivatives["dW" + str(self.L)].shape,
+        )
         # 2. hidden layer 쪽 미분계수 구하기
+        for l in range(self.L - 1, 0, -1):
+            print(
+                "derivatives shape: \n\t dz: ",
+                self.derivatives["dz" + str(l + 1)].shape,
+                "\t\t w:",
+                np.transpose(self.parameters["w" + str(l + 1)]).shape,
+                "\t\t net: ",
+                self.sigmoid_prime(self.parameters["net" + str(l)]).shape,
+            )
 
-    def backpropagation(self):
-        pass
+            self.derivatives["dz" + str(l)] = np.dot(
+                self.derivatives["dz" + str(l + 1)],
+                np.transpose(self.parameters["w" + str(l + 1)]),
+            ) * self.sigmoid_prime(self.parameters["net" + str(l)])
+
+            print(
+                "derivatives shape: \n\t dz: ",
+                self.derivatives["dz" + str(l)].shape,
+                "\t\t w:",
+                np.transpose(self.parameters["out" + str(l - 1)]).shape,
+            )
+            self.derivatives["dW" + str(l)] = np.dot(
+                self.derivatives["dz" + str(l)],
+                np.transpose(self.parameters["out" + str(l - 1)]),
+            )
+            self.derivatives["db" + str(l)] = self.derivatives["dz" + str(l)]
+
+            print(
+                "derivatives shape: \n\t dz: ",
+                self.derivatives["dz" + str(l)].shape,
+                "\n\t dw: ",
+                self.derivatives["dW" + str(l)].shape,
+            )
+
+    def backpropagation(self, lr):
+        for l in range(1, self.L + 1):
+            self.parameters["w" + str(l)] -= lr * self.derivatives["dW" + str(l)]
 
     def calc_cost(self, y):
         # mean square error
-        self.parameters["c"] = (1 / len(y)) * np.sum(
+        self.parameters["c"] = (1 / 2) * np.sum(
             np.subtract(y, self.parameters["out" + str(self.L)]) ** 2
         )
-
-    def optimization(self):
-        pass
+        return self.parameters["c"]
 
 
 # hidden_layer = [{"name": "1", "units": 2}, {"name": "1", "units": 2}]
