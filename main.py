@@ -25,7 +25,7 @@ hiddens = [
     {"name": "dense4", "units": 16},
 ]
 
-epochs = 10
+epochs = 10000
 
 for i in range(1):
 
@@ -48,9 +48,10 @@ for i in range(1):
     # 4. nn
     NN = FullyConnected(input_layer=flatten, hidden_layer=hiddens)
     ff_out = flatten
-    for j in range(epochs):
-        ff_out = NN.feedforward(ff_out)
+    for j in range(epochs + 1):
+        ff_out = NN.feedforward(flatten)
         cost = NN.calc_cost(train_y[i])
         NN.calc_derivatives(train_y[i])
-        NN.backpropagation(0.1)
-        print("epoch" + str(j) + ": ", cost)
+        NN.backpropagation(0.5)
+        if j % 100 == 0:
+            print("epoch" + str(j) + ": ", cost)

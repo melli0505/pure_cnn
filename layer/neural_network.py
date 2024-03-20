@@ -78,46 +78,46 @@ class FullyConnected:
         )
         # dbL
         self.derivatives["db" + str(self.L)] = self.derivatives["dz" + str(self.L)]
-        print(
-            "derivatives shape: \n\t dz: ",
-            self.derivatives["dz" + str(self.L)].shape,
-            "\n\t dw: ",
-            self.derivatives["dW" + str(self.L)].shape,
-        )
+        # print(
+        #     "derivatives shape: \n\t dz: ",
+        #     self.derivatives["dz" + str(self.L)].shape,
+        #     "\n\t dw: ",
+        #     self.derivatives["dW" + str(self.L)].shape,
+        # )
         # 2. hidden layer 쪽 미분계수 구하기
         for l in range(self.L - 1, 0, -1):
-            print(
-                "derivatives shape: \n\t dz: ",
-                self.derivatives["dz" + str(l + 1)].shape,
-                "\t\t w:",
-                np.transpose(self.parameters["w" + str(l + 1)]).shape,
-                "\t\t net: ",
-                self.sigmoid_prime(self.parameters["net" + str(l)]).shape,
-            )
+            # print(
+            #     "derivatives shape: \n\t dz: ",
+            #     self.derivatives["dz" + str(l + 1)].shape,
+            #     "\t\t w:",
+            #     np.transpose(self.parameters["w" + str(l + 1)]).shape,
+            #     "\t\t net: ",
+            #     self.sigmoid_prime(self.parameters["net" + str(l)]).shape,
+            # )
 
             self.derivatives["dz" + str(l)] = np.dot(
                 self.derivatives["dz" + str(l + 1)],
                 np.transpose(self.parameters["w" + str(l + 1)]),
             ) * self.sigmoid_prime(self.parameters["net" + str(l)])
 
-            print(
-                "derivatives shape: \n\t dz: ",
-                self.derivatives["dz" + str(l)].shape,
-                "\t\t w:",
-                np.transpose(self.parameters["out" + str(l - 1)]).shape,
-            )
+            # print(
+            #     "derivatives shape: \n\t dz: ",
+            #     self.derivatives["dz" + str(l)].shape,
+            #     "\t\t w:",
+            #     np.transpose(self.parameters["out" + str(l - 1)]).shape,
+            # )
             self.derivatives["dW" + str(l)] = np.dot(
                 self.derivatives["dz" + str(l)],
-                np.transpose(self.parameters["out" + str(l - 1)]),
+                np.transpose(self.parameters["out" + str(l)]),
             )
             self.derivatives["db" + str(l)] = self.derivatives["dz" + str(l)]
 
-            print(
-                "derivatives shape: \n\t dz: ",
-                self.derivatives["dz" + str(l)].shape,
-                "\n\t dw: ",
-                self.derivatives["dW" + str(l)].shape,
-            )
+            # print(
+            #     "derivatives shape: \n\t dz: ",
+            #     self.derivatives["dz" + str(l)].shape,
+            #     "\n\t dw: ",
+            #     self.derivatives["dW" + str(l)].shape,
+            # )
 
     def backpropagation(self, lr):
         for l in range(1, self.L + 1):
