@@ -16,18 +16,21 @@ mnist_np = np.array(csv_data, dtype=np.int32)
 
 
 train_y = mnist_np[:, 0]
-train_x = mnist_np[:, 1:].reshape(60000, 1, 28, 28)
+train_x = mnist_np[:, 1:].reshape(59999, 1, 28, 28)
 
 hiddens = [
     {"name": "dense1", "units": 128},
     {"name": "dense2", "units": 64},
     {"name": "dense3", "units": 32},
     {"name": "dense4", "units": 16},
+    {"name": "dense4", "units": 10},
 ]
+
+NN = FullyConnected(input_layer=np.ones((18432, )), hidden_layer=hiddens)
 
 epochs = 10000
 
-for i in range(1):
+for i in range(10):
 
     # 2. convolution
     conv2d1 = Convolution(train_x[i], filter_num=8, kernel_size=(3, 3))
@@ -46,12 +49,13 @@ for i in range(1):
     print("flatten: ", flatten.shape)
 
     # 4. nn
-    NN = FullyConnected(input_layer=flatten, hidden_layer=hiddens)
     ff_out = flatten
     for j in range(epochs + 1):
         ff_out = NN.feedforward(flatten)
         cost = NN.calc_cost(train_y[i])
         NN.calc_derivatives(train_y[i])
         NN.backpropagation(0.5)
-        if j % 100 == 0:
+        if j % 1000 == 0:
             print("epoch" + str(j) + ": ", cost)
+
+    print(f"+ image [{i}]   |   prediction : ", np.argmax(ff_out), "\t label: ", train_y[i] )

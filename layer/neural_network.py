@@ -1,4 +1,5 @@
 import numpy as np
+from .softmax import Softmax
 
 
 class FullyConnected:
@@ -28,6 +29,7 @@ class FullyConnected:
             self.parameters["net" + str(i + 1)] = np.ones((hidden_layer[i]["units"], 1))
 
         self.parameters["c"] = 1
+        self.parameters["s"] = []
         self.derivatives = {}
 
     def sigmoid(self, x):
@@ -36,6 +38,21 @@ class FullyConnected:
     def sigmoid_prime(self, x):
         return self.sigmoid(x) * (1.0 - self.sigmoid(x))
 
+    def softmax(self, x):
+        exp_a = np.exp(x)
+        return exp_a / np.sum(exp_a, axis = 0)
+    
+    def softmax_prime(self, x, y):
+        gradient = np.zeros(10)
+        gradient[y] = -1 / self.parameters["s"][y]
+
+        for i, grad in enumerate(gradient):
+            exp_t = np.exp(self.parameters["out" + str(self.L)])
+            s = np.sum(exp_t)
+
+
+    
+    
     def feedforward(self, input_layer):
         """
         w = weight matrix [   ]
@@ -63,12 +80,17 @@ class FullyConnected:
             self.parameters["out" + str(l)] = self.sigmoid(
                 self.parameters["net" + str(l)]
             )
-        return self.parameters["out" + str(self.L)]
+
+        self.parameters["s"] = self.softmax(self.parameters["out" + str(self.L)])
+        return self.parameters["s"]
 
     def calc_derivatives(self, y):
         # 1. output layer 쪽 미분계수 구하기
+        y_mat = np.zeros((10, ))
+        y_mat[y] = 1
         # dzL
-        self.derivatives["dz" + str(self.L)] = self.parameters["out" + str(self.L)] - y
+        self.derivatives["ds"] = y_mat - self.parameters["s"]
+        self.derivatives["dz" + str(self.L)] = self.parameters["out" + str(self.L)] - (self.derivatives["ds"] * (1 - self.derivatives["ds"]))
         # dWL
         self.derivatives["dW" + str(self.L)] = (
             self.derivatives["dz" + str(self.L)]
@@ -78,46 +100,22 @@ class FullyConnected:
         )
         # dbL
         self.derivatives["db" + str(self.L)] = self.derivatives["dz" + str(self.L)]
-        # print(
-        #     "derivatives shape: \n\t dz: ",
-        #     self.derivatives["dz" + str(self.L)].shape,
-        #     "\n\t dw: ",
-        #     self.derivatives["dW" + str(self.L)].shape,
-        # )
+
         # 2. hidden layer 쪽 미분계수 구하기
         for l in range(self.L - 1, 0, -1):
-            # print(
-            #     "derivatives shape: \n\t dz: ",
-            #     self.derivatives["dz" + str(l + 1)].shape,
-            #     "\t\t w:",
-            #     np.transpose(self.parameters["w" + str(l + 1)]).shape,
-            #     "\t\t net: ",
-            #     self.sigmoid_prime(self.parameters["net" + str(l)]).shape,
-            # )
 
             self.derivatives["dz" + str(l)] = np.dot(
                 self.derivatives["dz" + str(l + 1)],
                 np.transpose(self.parameters["w" + str(l + 1)]),
             ) * self.sigmoid_prime(self.parameters["net" + str(l)])
 
-            # print(
-            #     "derivatives shape: \n\t dz: ",
-            #     self.derivatives["dz" + str(l)].shape,
-            #     "\t\t w:",
-            #     np.transpose(self.parameters["out" + str(l - 1)]).shape,
-            # )
             self.derivatives["dW" + str(l)] = np.dot(
                 self.derivatives["dz" + str(l)],
                 np.transpose(self.parameters["out" + str(l)]),
             )
             self.derivatives["db" + str(l)] = self.derivatives["dz" + str(l)]
 
-            # print(
-            #     "derivatives shape: \n\t dz: ",
-            #     self.derivatives["dz" + str(l)].shape,
-            #     "\n\t dw: ",
-            #     self.derivatives["dW" + str(l)].shape,
-            # )
+
 
     def backpropagation(self, lr):
         for l in range(1, self.L + 1):
@@ -125,9 +123,14 @@ class FullyConnected:
 
     def calc_cost(self, y):
         # mean square error
-        self.parameters["c"] = (1 / 2) * np.sum(
-            np.subtract(y, self.parameters["out" + str(self.L)]) ** 2
-        )
+        self.parameters["c"] = -np.log(self.parameters["s"][y])
+        #-(y*np.log(self.parameters['out' + str(self.L)]) + (1-y)*np.log( 1 - self.parameters['out' + str(self.L)]))
+        
+        # (1 / 2) * np.sum(
+        #     np.subtract(y, self.parameters["out" + str(self.L)]) ** 2
+        # )
+
+        # print(self.parameters["out" + str(self.L)].shape)
         return self.parameters["c"]
 
 
